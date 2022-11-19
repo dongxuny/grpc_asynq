@@ -16,8 +16,6 @@ grpc:
         exporter:
           jaeger:
             agent:
-              enabled: false
-            collector:
               enabled: true
       logging:
         enabled: true

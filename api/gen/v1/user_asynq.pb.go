@@ -328,10 +328,13 @@ func newFileExporter(outputPath string, opts ...stdouttrace.Option) sdktrace.Spa
 //
 // 1: If no option provided, then export to jaeger agent at localhost:6831
 // 2: Jaeger agent
-//    If no jaeger agent host was provided, then use localhost
-//    If no jaeger agent port was provided, then use 6831
+//
+//	If no jaeger agent host was provided, then use localhost
+//	If no jaeger agent port was provided, then use 6831
+//
 // 3: Jaeger collector
-//    If no jaeger collector endpoint was provided, then use http://localhost:14268/api/traces
+//
+//	If no jaeger collector endpoint was provided, then use http://localhost:14268/api/traces
 func newJaegerExporter(opt jaeger.EndpointOption) sdktrace.SpanExporter {
 	// Assign default jaeger agent endpoint which is localhost:6831
 	if opt == nil {
@@ -388,7 +391,6 @@ func _handle_task_before(ctx context.Context, task *asynq.Task, in interface{}) 
 
 	// create new span
 	ctx, span := tHolder.tracer.Start(oteltrace.ContextWithRemoteSpanContext(ctx, spanCtx), task.Type())
-	defer span.End()
 
 	ctx = context.WithValue(ctx, spanKey, span)
 	ctx = context.WithValue(ctx, traceIdKey, span.SpanContext().TraceID().String())
@@ -405,10 +407,13 @@ func _handle_task_before(ctx context.Context, task *asynq.Task, in interface{}) 
 
 func _handle_task_after(span oteltrace.Span, err error) {
 	if err != nil {
+		span.RecordError(err)
 		span.SetStatus(codes.Error, fmt.Sprintf("%v", err))
 	} else {
 		span.SetStatus(codes.Ok, "success")
 	}
+
+	span.End()
 }
 
 type wrapPayload struct {
@@ -479,11 +484,11 @@ func (c *UserTaskClientImpl) CreateUser(ctx context.Context, in *CreateUserPaylo
 
 	spanCtx := oteltrace.SpanContextFromContext(ctx)
 	ctx, span := tHolder.tracer.Start(oteltrace.ContextWithRemoteSpanContext(ctx, spanCtx), "CreateUserClient")
-	defer span.End()
 
 	// get trace metadata
 	m := make(map[string]string)
 	tHolder.propagator.Inject(ctx, propagation.MapCarrier(m))
+	defer span.End()
 
 	wrap, err := json.Marshal(wrapPayload{
 		Trace:   m,
@@ -509,11 +514,11 @@ func (c *UserTaskClientImpl) UpdateUser(ctx context.Context, in *UpdateUserPaylo
 
 	spanCtx := oteltrace.SpanContextFromContext(ctx)
 	ctx, span := tHolder.tracer.Start(oteltrace.ContextWithRemoteSpanContext(ctx, spanCtx), "UpdateUserClient")
-	defer span.End()
 
 	// get trace metadata
 	m := make(map[string]string)
 	tHolder.propagator.Inject(ctx, propagation.MapCarrier(m))
+	defer span.End()
 
 	wrap, err := json.Marshal(wrapPayload{
 		Trace:   m,

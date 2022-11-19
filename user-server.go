@@ -3,6 +3,7 @@ package main
 import (
 	"context"
 	_ "embed"
+	"errors"
 	"fmt"
 	"github.com/hibiken/asynq"
 	"github.com/rookie-ninja/rk-boot/v2"
@@ -46,7 +47,7 @@ func NewUserTaskServer() *userTaskServer {
 	conf.Asynq.Trace.Enabled = true
 	conf.Asynq.Trace.ServiceName = "user-task-server"
 	conf.Asynq.Trace.ServiceVersion = "v1"
-	conf.Asynq.Trace.Exporter.Jaeger.Collector.Enabled = true
+	conf.Asynq.Trace.Exporter.Jaeger.Agent.Enabled = true
 	demo.RegisterTraceHolder(conf)
 
 	// start asynq service
@@ -79,18 +80,18 @@ type userTaskServer struct {
 func (t *userTaskServer) CreateUser(ctx context.Context, payload *demo.CreateUserPayload) error {
 	fmt.Println(fmt.Sprintf("traceId: %s", demo.GetTraceId(ctx)))
 
-	// call after server
-	after, _ := grpc.Dial("localhost:2022", []grpc.DialOption{
-		grpc.WithBlock(),
-		grpc.WithInsecure(),
-	}...)
-	defer after.Close()
+	//// call after server
+	//after, _ := grpc.Dial("localhost:2022", []grpc.DialOption{
+	//	grpc.WithBlock(),
+	//	grpc.WithInsecure(),
+	//}...)
+	//defer after.Close()
+	//
+	//client := demo.NewAfterClient(after)
+	//
+	//client.CreateAfter(ctx, &demo.CreateAfterReq{})
 
-	client := demo.NewAfterClient(after)
-
-	_, err := client.CreateAfter(ctx, &demo.CreateAfterReq{})
-
-	return err
+	return errors.New("failed to create user...")
 }
 
 func (t *userTaskServer) UpdateUser(ctx context.Context, payload *demo.UpdateUserPayload) error {
